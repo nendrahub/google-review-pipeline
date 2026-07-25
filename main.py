@@ -2,18 +2,21 @@ from apify_client import ApifyClient
 from supabase import create_client
 import os
 
+# =====================
+# CONFIG
+# =====================
 
-# API / Identity
 APIFY_TOKEN = os.environ["APIFY_TOKEN"]
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 
-
 ACTOR_ID = "Xb8osYTtOjlsgI6k9"
 
+# =====================
+# CLIENT
+# =====================
 
-# Connection
 apify = ApifyClient(APIFY_TOKEN)
 
 supabase = create_client(
@@ -21,13 +24,15 @@ supabase = create_client(
     SUPABASE_KEY
 )
 
+# =====================
+# APIFY INPUT
+# =====================
 
-# Input Scraping
 run_input = {
     "language": "id",
     "personalData": True,
     "reviewsOrigin": "google",
-    "reviewsStartDate": "3 days",
+    "reviewsStartDate": "1 day",
     "startUrls": [
         {
             "url": "https://www.google.com/maps/place/Daya+Toyota+Cakung+Official/@-6.192028,106.970474,17z"
@@ -35,8 +40,10 @@ run_input = {
     ]
 }
 
+# =====================
+# RUN ACTOR
+# =====================
 
-# Run Apify
 run = apify.actor(ACTOR_ID).call(
     run_input=run_input
 )
@@ -45,32 +52,41 @@ print("Status:", run.status)
 print("Run ID:", run.id)
 print("Dataset ID:", run.default_dataset_id)
 
+# =====================
+# GET DATASET
+# =====================
+
 dataset = apify.dataset(run.default_dataset_id)
 
-reviews = list(dataset.iterate_items())
+items_page = dataset.list_items()
+
+reviews = items_page.items
 
 print("Jumlah review:", len(reviews))
 
-if len(reviews) > 0:
-    print(reviews[0])
-
-
-print("Jumlah review:", len(reviews))
-
-
-# Stop if there are no data
 if len(reviews) == 0:
+    print("Tidak ada review baru")
     exit()
 
+print("Sample review:")
+print(reviews[0])
 
-# Mapping
-data = []
+# =====================
+# MAPPING
+# =====================
+
+mapped_reviews = []
 
 for r in reviews:
 
-    data.append({
+    review_id = r.get("reviewId")
 
-        "review_id": r.get("reviewId"),
+    if not review_id:
+        print("SKIP review tanpa reviewId")
+        continue
+
+    mapped_reviews.append({
+        "review_id": review_id,
         "reviewer_id": r.get("reviewerId"),
         "name": r.get("name"),
         "text": r.get("text"),
@@ -81,14 +97,23 @@ for r in reviews:
         "response_from_owner_date": r.get("responseFromOwnerDate"),
         "response_from_owner_text": r.get("responseFromOwnerText"),
         "scraped_at": r.get("scrapedAt")
-
     })
 
+print("Siap upload:", len(mapped_reviews))
 
-# Supabase
-supabase.table("reviews_raw")\
-    .upsert(data)\
+# =====================
+# UPSERT SUPABASE
+# =====================
+
+result = (
+    supabase
+    .table("reviews_raw")
+    .upsert(
+        mapped_reviews,
+        on_conflict="review_id"
+    )
     .execute()
+)
 
-
-print("Selesai upload:", len(data))
+print("Upload selesai")
+print(result)
