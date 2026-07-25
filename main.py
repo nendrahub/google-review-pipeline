@@ -41,14 +41,18 @@ run = apify.actor(ACTOR_ID).call(
     run_input=run_input
 )
 
-
 print("Status:", run.status)
+print("Run ID:", run.id)
+print("Dataset ID:", run.default_dataset_id)
 
+dataset = apify.dataset(run.default_dataset_id)
 
-# Take Scraping Result
-reviews = list(
-    apify.dataset(run.default_dataset_id).iterate_items()
-)
+reviews = list(dataset.iterate_items())
+
+print("Jumlah review:", len(reviews))
+
+if len(reviews) > 0:
+    print(reviews[0])
 
 
 print("Jumlah review:", len(reviews))
