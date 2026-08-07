@@ -28,7 +28,7 @@ run_input = {
     "language": "id",
     "personalData": True,
     "reviewsOrigin": "google",
-    "reviewsStartDate": "2018-01-01",
+    "reviewsStartDate": "2026-07-07",
     "startUrls": [
         {
             "url": "https://www.google.com/maps/place/Daya+Toyota+Cakung+Official/@-6.192028,106.970474,17z/data=!3m1!4b1!4m8!3m7!1s0x2e698b9e6c61a61f:0x5aced58296cf20ae!8m2!3d-6.192028!4d106.970474!9m1!1b1!16s%2Fg%2F11hdq83g_c"
@@ -83,7 +83,7 @@ for r in reviews:
     "response_from_owner_date": r.get("responseFromOwnerDate"),
     "response_from_owner_text": r.get("responseFromOwnerText"),
 
-    "totalScore": r.get("totalScore"),
+    "totalscore": r.get("totalScore"),
 
     "scraped_at": now
 
